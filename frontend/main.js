@@ -1775,36 +1775,36 @@ const app = createApp({
                 <el-header>
                     <nav class="navbar">
                         <div class="logo">在线刷题系统</div>
-                        <el-menu :default-active="$route.path" mode="horizontal" background-color="#545c64" text-color="#fff" active-text-color="#ffd04b">
-                            <el-menu-item index="/" route="/">
+                        <el-menu :default-active="$route.path" mode="horizontal" background-color="#545c64" text-color="#fff" active-text-color="#ffd04b" router="true">
+                            <el-menu-item index="/">
                                 <i class="fa fa-dashboard"></i>
                                 <span>Dashboard</span>
                             </el-menu-item>
-                            <el-menu-item index="/questions" route="/questions">
+                            <el-menu-item index="/questions">
                                 <i class="fa fa-book"></i>
                                 <span>题库浏览</span>
                             </el-menu-item>
-                            <el-menu-item index="/exams" route="/exams">
+                            <el-menu-item index="/exams">
                                 <i class="fa fa-file-text-o"></i>
                                 <span>模拟考试</span>
                             </el-menu-item>
-                            <el-menu-item index="/wrong-answers" route="/wrong-answers">
+                            <el-menu-item index="/wrong-answers">
                                 <i class="fa fa-exclamation-triangle"></i>
                                 <span>错题本</span>
                             </el-menu-item>
-                            <el-menu-item index="/rankings" route="/rankings">
+                            <el-menu-item index="/rankings">
                                 <i class="fa fa-trophy"></i>
                                 <span>排行榜</span>
                             </el-menu-item>
-                            <el-menu-item index="/submit-question" route="/submit-question">
+                            <el-menu-item index="/submit-question">
                                 <i class="fa fa-plus-circle"></i>
                                 <span>提交题目</span>
                             </el-menu-item>
-                            <el-menu-item index="/my-tickets" route="/my-tickets">
+                            <el-menu-item index="/my-tickets">
                                 <i class="fa fa-ticket"></i>
                                 <span>我的工单</span>
                             </el-menu-item>
-                            <el-menu-item index="/admin" route="/admin" style="margin-left: auto;">
+                            <el-menu-item index="/admin" style="margin-left: auto;">
                                 <i class="fa fa-cog"></i>
                                 <span>后台管理</span>
                             </el-menu-item>
