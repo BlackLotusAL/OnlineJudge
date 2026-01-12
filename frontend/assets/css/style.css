@@ -1,0 +1,122 @@
+/* 全局样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+}
+
+/* 应用容器 */
+.app-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 导航栏样式 */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #545c64;
+    color: #fff;
+    padding: 0 20px;
+    height: 60px;
+}
+
+.logo {
+    font-size: 20px;
+    font-weight: bold;
+    margin-right: 20px;
+}
+
+/* 主要内容区域 */
+el-main {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* 页脚样式 */
+el-footer {
+    background-color: #f0f2f5;
+    text-align: center;
+    padding: 10px;
+    font-size: 14px;
+    color: #606266;
+}
+
+/* 卡片样式 */
+.card {
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+/* 标题样式 */
+h1, h2, h3, h4, h5, h6 {
+    margin-bottom: 16px;
+    color: #303133;
+}
+
+/* 按钮样式 */
+.btn {
+    margin-right: 10px;
+}
+
+/* 表单样式 */
+.form-item {
+    margin-bottom: 16px;
+}
+
+/* 列表样式 */
+.list-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #ebeef5;
+}
+
+/* 统计卡片样式 */
+.stat-card {
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 32px;
+    font-weight: bold;
+    color: #409eff;
+    margin-bottom: 8px;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #606266;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        height: auto;
+        padding: 10px;
+    }
+    
+    .logo {
+        margin-bottom: 10px;
+    }
+    
+    el-main {
+        padding: 10px;
+    }
+}

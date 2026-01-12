@@ -1,0 +1,16 @@
+server:
+  host: "0.0.0.0"
+  port: 8000
+  debug: true
+
+database:
+   host: "localhost"
+   port: 5432
+   name: "onlinejudge"
+   user: "postgres"
+   password: "postgres"
+
+paths:
+  upload_dir: "./uploads"
+  backup_dir: "./backups"
+  logs_dir: "./logs"
