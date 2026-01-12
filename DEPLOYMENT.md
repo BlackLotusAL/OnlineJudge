@@ -73,22 +73,53 @@ GRANT ALL PRIVILEGES ON DATABASE onlinejudge TO postgres;
 ```
 
 3. 编辑PostgreSQL配置文件，允许远程访问 (可选):
-```bash
-# 编辑pg_hba.conf文件
-sudo vi /var/lib/pgsql/data/pg_hba.conf
 
-# 添加以下行
+   **注意：不同Linux发行版的配置文件路径不同，根据您的系统选择正确路径：**
+
+   | 发行版 | pg_hba.conf路径 | postgresql.conf路径 |
+   |--------|----------------|---------------------|
+   | SUSE Linux | /var/lib/pgsql/data/ | /var/lib/pgsql/data/ |
+   | Ubuntu/Debian | /etc/postgresql/[版本]/main/ | /etc/postgresql/[版本]/main/ |
+   | CentOS/RHEL | /var/lib/pgsql/data/ | /var/lib/pgsql/data/ |
+
+   **示例：Ubuntu/Debian系统**
+   ```bash
+   # 查看PostgreSQL版本
+   pg_config --version
+   
+   # 编辑pg_hba.conf文件（替换[版本]为实际版本号，如14）
+   sudo vi /etc/postgresql/[版本]/main/pg_hba.conf
+   
+   # 添加以下行
 host    all             all             0.0.0.0/0               md5
-
-# 编辑postgresql.conf文件
-sudo vi /var/lib/pgsql/data/postgresql.conf
-
-# 修改以下行
+   
+   # 编辑postgresql.conf文件
+sudo vi /etc/postgresql/[版本]/main/postgresql.conf
+   
+   # 修改以下行
 listen_addresses = '*'
-
-# 重启PostgreSQL服务
+   
+   # 重启PostgreSQL服务
 sudo systemctl restart postgresql
-```
+   ```
+
+   **示例：SUSE/CentOS/RHEL系统**
+   ```bash
+   # 编辑pg_hba.conf文件
+sudo vi /var/lib/pgsql/data/pg_hba.conf
+   
+   # 添加以下行
+host    all             all             0.0.0.0/0               md5
+   
+   # 编辑postgresql.conf文件
+sudo vi /var/lib/pgsql/data/postgresql.conf
+   
+   # 修改以下行
+listen_addresses = '*'
+   
+   # 重启PostgreSQL服务
+sudo systemctl restart postgresql
+   ```
 
 ### 2.3 部署在线刷题系统
 
