@@ -89,7 +89,7 @@ const app = createApp({
 
 // 配置Axios
 app.config.globalProperties.$axios = axios;
-axios.defaults.baseURL = 'http://localhost:8000/api';
+axios.defaults.baseURL = 'http://47.83.236.198:8000/api';
 
 // 使用插件
 app.use(router);
