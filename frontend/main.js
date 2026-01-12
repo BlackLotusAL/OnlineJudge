@@ -1,8 +1,7 @@
 // 使用全局变量，因为已在index.html中通过script标签加载
 const { createApp } = Vue;
 const { createRouter, createWebHistory } = VueRouter;
-const ElementPlus = ElementPlus;
-const axios = axios;
+// ElementPlus和axios已经是全局变量，不需要重新赋值
 
 // 导入页面组件
 // 使用动态导入或直接在页面中定义组件，避免模块导入问题
