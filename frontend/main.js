@@ -983,10 +983,36 @@ const SubmitQuestion = {
                     </el-form-item>
                     
                     <el-form-item label="正确答案" prop="correctAnswer">
-                        <el-input 
-                            v-model="questionForm.correctAnswer" 
-                            :placeholder="getAnswerPlaceholder()"
-                        ></el-input>
+                        <div v-if="questionForm.type === '判断题'" class="answer-options">
+                            <el-radio-group v-model="questionForm.correctAnswer">
+                                <el-radio label="A">A. 对</el-radio>
+                                <el-radio label="B">B. 错</el-radio>
+                            </el-radio-group>
+                        </div>
+                        <div v-else-if="questionForm.type === '单选题'" class="answer-options">
+                            <el-radio-group v-model="questionForm.correctAnswer">
+                                <el-radio 
+                                    v-for="(option, index) in questionForm.options" 
+                                    :key="index" 
+                                    :label="String.fromCharCode(65 + index)"
+                                    :disabled="!option"
+                                >
+                                    {{ String.fromCharCode(65 + index) }}. {{ option }}
+                                </el-radio>
+                            </el-radio-group>
+                        </div>
+                        <div v-else-if="questionForm.type === '多选题'" class="answer-options">
+                            <el-checkbox-group v-model="questionForm.correctAnswerArray">
+                                <el-checkbox 
+                                    v-for="(option, index) in questionForm.options" 
+                                    :key="index" 
+                                    :label="String.fromCharCode(65 + index)"
+                                    :disabled="!option"
+                                >
+                                    {{ String.fromCharCode(65 + index) }}. {{ option }}
+                                </el-checkbox>
+                            </el-checkbox-group>
+                        </div>
                         <div class="form-tip">{{ getAnswerTip() }}</div>
                     </el-form-item>
                     
@@ -1045,6 +1071,7 @@ const SubmitQuestion = {
                 content: '',
                 options: ['', ''],
                 correctAnswer: '',
+                correctAnswerArray: [],
                 explanation: '',
                 difficulty: 1,
                 subject: '',
@@ -1101,10 +1128,16 @@ const SubmitQuestion = {
                 while (this.questionForm.options.length < 2) {
                     this.questionForm.options.push('');
                 }
+                // 清空答案
+                this.questionForm.correctAnswer = '';
+                this.questionForm.correctAnswerArray = [];
             } else if (this.questionForm.options.length < 2) {
                 while (this.questionForm.options.length < 2) {
                     this.questionForm.options.push('');
                 }
+                // 清空答案
+                this.questionForm.correctAnswer = '';
+                this.questionForm.correctAnswerArray = [];
             }
         }
     },
@@ -1133,11 +1166,26 @@ const SubmitQuestion = {
         submitQuestion() {
             this.$refs.questionFormRef.validate((valid) => {
                 if (valid) {
+                    // 根据题目类型格式化答案
+                    let formattedAnswer;
+                    const type = this.questionForm.type;
+                    
+                    if (type === '判断题') {
+                        formattedAnswer = this.questionForm.correctAnswer;
+                    } else if (type === '单选题') {
+                        formattedAnswer = this.questionForm.correctAnswer;
+                    } else if (type === '多选题') {
+                        // 将数组转换为逗号分隔的字符串
+                        formattedAnswer = this.questionForm.correctAnswerArray.join(',');
+                    } else {
+                        formattedAnswer = this.questionForm.correctAnswer;
+                    }
+                    
                     const submitData = {
                         type: this.questionForm.type,
                         content: this.questionForm.content,
                         options: JSON.stringify(this.questionForm.options),
-                        correct_answer: this.questionForm.correctAnswer,
+                        correct_answer: formattedAnswer,
                         explanation: this.questionForm.explanation,
                         difficulty: this.questionForm.difficulty,
                         subject: this.questionForm.subject,
@@ -1146,6 +1194,9 @@ const SubmitQuestion = {
                         status: '待审核',
                         creator_ip: '127.0.0.1'
                     };
+                    
+                    console.log('提交题目数据：', submitData);
+                    console.log('当前表单数据：', this.questionForm);
                     
                     // 显示加载状态
                     const loading = this.$loading({
@@ -1156,13 +1207,17 @@ const SubmitQuestion = {
                     
                     this.$axios.post('/questions/', submitData)
                         .then(response => {
+                            console.log('提交成功：', response.data);
                             loading.close();
                             this.$message.success('题目提交成功，等待审核！');
                             this.resetForm();
                         })
                         .catch(error => {
                             loading.close();
-                            console.error('提交失败:', error);
+                            console.error('提交失败详细信息：', error);
+                            console.error('错误响应：', error.response);
+                            console.error('错误状态码：', error.response ? error.response.status : '无');
+                            console.error('错误数据：', error.response ? error.response.data : '无');
                             
                             // 根据错误类型提供不同的提示
                             let errorMessage = '题目提交失败，请稍后重试！';
@@ -1171,8 +1226,12 @@ const SubmitQuestion = {
                                 const status = error.response.status;
                                 const data = error.response.data;
                                 
+                                console.log('处理错误响应，状态码：', status);
+                                console.log('错误数据：', data);
+                                
                                 if (status === 422) {
                                     // 验证错误
+                                    console.log('检测到422验证错误');
                                     if (data.detail && typeof data.detail === 'string') {
                                         errorMessage = `验证失败：${data.detail}`;
                                     } else if (data.detail && Array.isArray(data.detail)) {
@@ -1184,12 +1243,18 @@ const SubmitQuestion = {
                                             return JSON.stringify(err);
                                         }).join('；');
                                         errorMessage = `输入错误：${errors}`;
+                                    } else if (data.detail && typeof data.detail === 'object') {
+                                        errorMessage = `验证失败：${JSON.stringify(data.detail)}`;
                                     }
                                 } else if (status === 400) {
                                     errorMessage = '请求参数错误，请检查输入内容';
                                 } else if (status === 500) {
                                     errorMessage = '服务器内部错误，请稍后重试';
+                                } else if (status === 404) {
+                                    errorMessage = 'API端点不存在';
                                 }
+                            } else if (error.request) {
+                                errorMessage = '网络连接失败，请检查网络连接';
                             } else if (error.message) {
                                 errorMessage = `网络错误：${error.message}`;
                             }
@@ -1198,9 +1263,11 @@ const SubmitQuestion = {
                         });
                 } else {
                     // 表单验证失败，滚动到第一个错误字段
+                    console.log('表单验证失败');
                     this.$nextTick(() => {
                         const errorFields = this.$refs.questionFormRef.fields.filter(field => field.validateState === 'error');
                         if (errorFields.length > 0) {
+                            console.log('错误字段：', errorFields);
                             errorFields[0].$el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
                     });
@@ -1213,6 +1280,8 @@ const SubmitQuestion = {
             this.$refs.questionFormRef.resetFields();
             this.questionForm.options = ['', ''];
             this.questionForm.image = '';
+            this.questionForm.correctAnswer = '';
+            this.questionForm.correctAnswerArray = [];
         },
         getAnswerPlaceholder() {
             const type = this.questionForm.type;
