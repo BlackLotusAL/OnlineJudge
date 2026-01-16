@@ -7,6 +7,11 @@ from sqlalchemy import func
 
 router = APIRouter()
 
+@router.get("/", response_model=list[user_schemas.User])
+def get_users(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+    users = db.query(user_models.User).offset(skip).limit(limit).all()
+    return users
+
 # 获取客户端IP地址的辅助函数
 def get_client_ip(request: Request):
     return request.client.host

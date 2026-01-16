@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config import config
 from app.models.db import engine, Base
-from app.api import users, questions, exams, tickets, rankings
+from app.api import users, questions, exams, tickets, rankings, wrong_answers
 
 # 创建数据库表
 Base.metadata.create_all(bind=engine)
@@ -25,6 +25,7 @@ app.include_router(questions.router, prefix="/api/questions", tags=["questions"]
 app.include_router(exams.router, prefix="/api/exams", tags=["exams"])
 app.include_router(tickets.router, prefix="/api/tickets", tags=["tickets"])
 app.include_router(rankings.router, prefix="/api/rankings", tags=["rankings"])
+app.include_router(wrong_answers.router, prefix="/api/wrong-answers", tags=["wrong-answers"])
 
 @app.get("/")
 def root():

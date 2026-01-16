@@ -90,23 +90,30 @@ const Dashboard = {
     },
     methods: {
         fetchStats() {
-            // 模拟获取系统统计数据
-            setTimeout(() => {
-                this.totalQuestions = 1500;
-                this.userCount = 500;
-                this.todayActiveUsers = 50;
-                this.overallAccuracy = 78.5;
-            }, 500);
+            // 获取系统统计数据
+            this.$axios.get('/questions/')
+                .then(response => {
+                    this.totalQuestions = response.data.length;
+                })
+                .catch(error => {
+                    console.error('获取统计数据失败:', error);
+                    this.$message.error('获取统计数据失败');
+                });
         },
         fetchUserStats() {
-            // 模拟获取用户统计数据
-            setTimeout(() => {
-                this.userStats = {
-                    total: 120,
-                    accuracy: 85.2,
-                    today: 10
-                };
-            }, 700);
+            // 获取当前用户信息
+            this.$axios.get('/users/me')
+                .then(response => {
+                    this.userStats = {
+                        total: response.data.total_questions || 0,
+                        accuracy: response.data.accuracy || 0,
+                        today: 0 // 暂时没有今日刷题数据
+                    };
+                })
+                .catch(error => {
+                    console.error('获取用户数据失败:', error);
+                    this.$message.error('获取用户数据失败');
+                });
         }
     }
 };
@@ -231,36 +238,33 @@ const Questions = {
     },
     methods: {
         searchQuestions() {
-            // 模拟获取题目数据
-            setTimeout(() => {
-                this.questions = [
-                    {
-                        id: 1,
-                        type: '单选题',
-                        content: '下列哪个是Python的关键字？',
-                        options: JSON.stringify(['if', 'then', 'elif', 'elseif']),
-                        correct_answer: 'A,C',
-                        explanation: 'Python的关键字包括if、elif、else等，then和elseif不是Python的关键字。',
-                        difficulty: 2.5,
-                        subject: 'Python',
-                        tags: '语法,基础',
-                        image: ''
-                    },
-                    {
-                        id: 2,
-                        type: '判断题',
-                        content: 'Python是一种解释型语言。',
-                        options: JSON.stringify(['对', '错']),
-                        correct_answer: 'A',
-                        explanation: 'Python是一种解释型编程语言，不需要编译成机器码即可执行。',
-                        difficulty: 1.0,
-                        subject: 'Python',
-                        tags: '基础,概念',
-                        image: ''
-                    }
-                ];
-                this.totalQuestions = 1500;
-            }, 500);
+            // 构建查询参数
+            const params = {
+                skip: (this.currentPage - 1) * this.pageSize,
+                limit: this.pageSize
+            };
+            
+            if (this.searchForm.type) {
+                params.type = this.searchForm.type;
+            }
+            if (this.searchForm.subject) {
+                params.subject = this.searchForm.subject;
+            }
+            if (this.searchForm.difficulty) {
+                params.difficulty_min = this.searchForm.difficulty[0];
+                params.difficulty_max = this.searchForm.difficulty[1];
+            }
+            
+            // 获取题目数据
+            this.$axios.get('/questions/', { params })
+                .then(response => {
+                    this.questions = response.data;
+                    this.totalQuestions = response.data.length;
+                })
+                .catch(error => {
+                    console.error('获取题目失败:', error);
+                    this.$message.error('获取题目失败');
+                });
         },
         resetForm() {
             this.searchForm = {
@@ -447,54 +451,43 @@ const Exams = {
             return parseInt(value);
         },
         generateExam() {
-            // 模拟生成试卷
-            setTimeout(() => {
-                this.currentExam = {
-                    id: 123,
-                    startTime: new Date().toLocaleString(),
-                    status: '进行中',
-                    totalScore: 100,
-                    obtainedScore: 0,
-                    duration: this.examConfig.duration,
-                    totalQuestions: this.examConfig.totalQuestions
-                };
-                this.remainingTime = this.examConfig.duration;
-                this.startTimer();
-                this.$message.success('试卷生成成功！');
-            }, 1000);
+            // 生成试卷
+            this.$axios.post('/exams/generate', {
+                user_ip: '127.0.0.1',
+                duration: this.examConfig.duration,
+                total_questions: this.examConfig.totalQuestions
+            })
+                .then(response => {
+                    this.currentExam = {
+                        id: response.data.id,
+                        startTime: new Date(response.data.start_time).toLocaleString(),
+                        status: response.data.status,
+                        totalScore: 100,
+                        obtainedScore: 0,
+                        duration: response.data.duration,
+                        totalQuestions: response.data.total_questions
+                    };
+                    this.remainingTime = this.examConfig.duration;
+                    this.startTimer();
+                    this.$message.success('试卷生成成功！');
+                })
+                .catch(error => {
+                    console.error('生成试卷失败:', error);
+                    this.$message.error('生成试卷失败');
+                });
         },
         startExam() {
-            // 模拟获取试卷题目
-            setTimeout(() => {
-                this.examQuestions = [
-                    {
-                        id: 1,
-                        type: '单选题',
-                        content: '下列哪个是Python的关键字？',
-                        options: JSON.stringify(['if', 'then', 'elif', 'elseif']),
-                        correct_answer: 'A,C',
-                        image: ''
-                    },
-                    {
-                        id: 2,
-                        type: '判断题',
-                        content: 'Python是一种解释型语言。',
-                        options: JSON.stringify(['对', '错']),
-                        correct_answer: 'A',
-                        image: ''
-                    },
-                    {
-                        id: 3,
-                        type: '多选题',
-                        content: '下列哪些是Python的基本数据类型？',
-                        options: JSON.stringify(['int', 'float', 'string', 'array']),
-                        correct_answer: 'A,B,C',
-                        image: ''
-                    }
-                ];
-                this.currentQuestion = this.examQuestions[0];
-                this.examDialogVisible = true;
-            }, 1000);
+            // 获取试卷题目
+            this.$axios.get(`/exams/${this.currentExam.id}`)
+                .then(response => {
+                    this.examQuestions = response.data.questions || [];
+                    this.currentQuestion = this.examQuestions[0];
+                    this.examDialogVisible = true;
+                })
+                .catch(error => {
+                    console.error('获取试卷题目失败:', error);
+                    this.$message.error('获取试卷题目失败');
+                });
         },
         startTimer() {
             this.timer = setInterval(() => {
@@ -507,63 +500,62 @@ const Exams = {
         },
         prevQuestion() {
             if (this.currentQuestionIndex > 0) {
-                // 保存当前答案
                 this.answers[this.currentQuestion.id] = this.answerForm.answer;
                 this.currentQuestionIndex--;
                 this.currentQuestion = this.examQuestions[this.currentQuestionIndex];
-                // 恢复之前的答案
                 this.answerForm.answer = this.answers[this.currentQuestion.id] || '';
             }
         },
         nextQuestion() {
             if (this.currentQuestionIndex < this.examQuestions.length - 1) {
-                // 保存当前答案
                 this.answers[this.currentQuestion.id] = this.answerForm.answer;
                 this.currentQuestionIndex++;
                 this.currentQuestion = this.examQuestions[this.currentQuestionIndex];
-                // 恢复之前的答案
                 this.answerForm.answer = this.answers[this.currentQuestion.id] || '';
             }
         },
         submitExam() {
-            // 保存最后一题的答案
             this.answers[this.currentQuestion.id] = this.answerForm.answer;
             
-            // 模拟提交试卷
-            setTimeout(() => {
-                this.examDialogVisible = false;
-                this.currentExam = null;
-                if (this.timer) {
-                    clearInterval(this.timer);
-                }
-                this.$message.success('试卷提交成功！');
-                this.loadExamHistory();
-            }, 1000);
+            // 提交试卷
+            const answers = Object.keys(this.answers).map(questionId => ({
+                question_id: parseInt(questionId),
+                user_answer: this.answers[questionId]
+            }));
+            
+            this.$axios.post(`/exams/${this.currentExam.id}/submit`, { answers })
+                .then(response => {
+                    this.examDialogVisible = false;
+                    this.currentExam = null;
+                    if (this.timer) {
+                        clearInterval(this.timer);
+                    }
+                    this.$message.success('试卷提交成功！');
+                    this.loadExamHistory();
+                })
+                .catch(error => {
+                    console.error('提交试卷失败:', error);
+                    this.$message.error('提交试卷失败');
+                });
         },
         loadExamHistory() {
-            // 模拟加载考试历史
-            setTimeout(() => {
-                this.examHistory = [
-                    {
-                        id: 101,
-                        startTime: '2026-01-10 14:30:00',
-                        endTime: '2026-01-10 15:30:00',
-                        status: '已完成',
-                        totalScore: 100,
-                        obtainedScore: 85,
-                        accuracy: 85
-                    },
-                    {
-                        id: 102,
-                        startTime: '2026-01-11 09:00:00',
-                        endTime: '2026-01-11 10:00:00',
-                        status: '已完成',
-                        totalScore: 100,
-                        obtainedScore: 92,
-                        accuracy: 92
-                    }
-                ];
-            }, 500);
+            // 获取考试历史
+            this.$axios.get('/exams/history/127.0.0.1')
+                .then(response => {
+                    this.examHistory = response.data.map(exam => ({
+                        id: exam.id,
+                        startTime: new Date(exam.start_time).toLocaleString(),
+                        endTime: exam.end_time ? new Date(exam.end_time).toLocaleString() : '',
+                        status: exam.status,
+                        totalScore: exam.total_score,
+                        obtainedScore: exam.obtained_score,
+                        accuracy: exam.accuracy
+                    }));
+                })
+                .catch(error => {
+                    console.error('获取考试历史失败:', error);
+                    this.$message.error('获取考试历史失败');
+                });
         },
         viewExamResult(exam) {
             this.$router.push({
@@ -690,39 +682,46 @@ const WrongAnswers = {
     },
     methods: {
         loadWrongAnswers() {
-            // 模拟加载错题数据
-            setTimeout(() => {
-                this.wrongAnswers = [
-                    {
-                        id: 1,
-                        questionId: 1,
-                        questionType: '单选题',
-                        questionContent: '下列哪个是Python的关键字？',
-                        options: JSON.stringify(['if', 'then', 'elif', 'elseif']),
-                        userAnswer: 'B',
-                        correctAnswer: 'A,C',
-                        explanation: 'Python的关键字包括if、elif、else等，then和elseif不是Python的关键字。',
-                        wrongTime: '2026-01-10 15:20:30',
-                        isReviewed: false
-                    },
-                    {
-                        id: 2,
-                        questionId: 2,
-                        questionType: '判断题',
-                        questionContent: 'Python是一种解释型语言。',
-                        options: JSON.stringify(['对', '错']),
-                        userAnswer: 'B',
-                        correctAnswer: 'A',
-                        explanation: 'Python是一种解释型编程语言，不需要编译成机器码即可执行。',
-                        wrongTime: '2026-01-11 09:30:15',
-                        isReviewed: true
-                    }
-                ];
-                this.totalWrongAnswers = this.wrongAnswers.length;
-            }, 500);
+            // 构建查询参数
+            const params = {
+                skip: (this.currentPage - 1) * this.pageSize,
+                limit: this.pageSize
+            };
+            
+            if (this.filterForm.type) {
+                params.type = this.filterForm.type;
+            }
+            if (this.filterForm.subject) {
+                params.subject = this.filterForm.subject;
+            }
+            if (this.filterForm.isReviewed !== null) {
+                params.is_reviewed = this.filterForm.isReviewed;
+            }
+            
+            // 获取错题数据
+            this.$axios.get('/wrong-answers/', { params })
+                .then(response => {
+                    this.wrongAnswers = response.data.map(wa => ({
+                        id: wa.id,
+                        questionId: wa.question_id,
+                        questionType: wa.question_type,
+                        questionContent: wa.question_content,
+                        options: wa.question_options,
+                        userAnswer: wa.user_answer,
+                        correctAnswer: wa.correct_answer,
+                        explanation: wa.explanation,
+                        wrongTime: new Date(wa.wrong_time).toLocaleString(),
+                        isReviewed: wa.is_reviewed
+                    }));
+                    this.totalWrongAnswers = this.wrongAnswers.length;
+                })
+                .catch(error => {
+                    console.error('获取错题失败:', error);
+                    this.$message.error('获取错题失败');
+                });
         },
         filterWrongAnswers() {
-            // 模拟筛选错题数据
+            this.currentPage = 1;
             this.loadWrongAnswers();
         },
         resetFilter() {
@@ -746,18 +745,29 @@ const WrongAnswers = {
             this.dialogVisible = true;
         },
         retryQuestion(wrongAnswer) {
-            // 模拟重做题目
             this.$message.info(`正在重做题目ID: ${wrongAnswer.questionId}`);
         },
         removeWrongAnswer(wrongAnswer) {
-            // 模拟删除错题
-            this.wrongAnswers = this.wrongAnswers.filter(item => item.id !== wrongAnswer.id);
-            this.totalWrongAnswers--;
-            this.$message.success('错题已删除！');
+            this.$axios.delete(`/wrong-answers/${wrongAnswer.id}`)
+                .then(response => {
+                    this.wrongAnswers = this.wrongAnswers.filter(item => item.id !== wrongAnswer.id);
+                    this.totalWrongAnswers--;
+                    this.$message.success('错题已删除！');
+                })
+                .catch(error => {
+                    console.error('删除错题失败:', error);
+                    this.$message.error('删除错题失败');
+                });
         },
         updateReviewStatus(wrongAnswer) {
-            // 模拟更新复习状态
-            this.$message.success(wrongAnswer.isReviewed ? '已标记为已复习' : '已标记为未复习');
+            this.$axios.put(`/wrong-answers/${wrongAnswer.id}`, { is_reviewed: wrongAnswer.isReviewed })
+                .then(response => {
+                    this.$message.success(wrongAnswer.isReviewed ? '已标记为已复习' : '已标记为未复习');
+                })
+                .catch(error => {
+                    console.error('更新复习状态失败:', error);
+                    this.$message.error('更新复习状态失败');
+                });
         }
     }
 };
@@ -872,44 +882,50 @@ const Rankings = {
     },
     methods: {
         loadRankings() {
-            // 模拟加载排行榜数据
-            setTimeout(() => {
-                // 刷题总量排行榜
-                this.totalRankings = [
-                    { rank: 1, userId: 1, userIp: '192.168.1.1', totalQuestions: 500, correctQuestions: 450, accuracy: 90 },
-                    { rank: 2, userId: 2, userIp: '192.168.1.2', totalQuestions: 450, correctQuestions: 405, accuracy: 90 },
-                    { rank: 3, userId: 3, userIp: '192.168.1.3', totalQuestions: 400, correctQuestions: 360, accuracy: 90 },
-                    { rank: 4, userId: 4, userIp: '192.168.1.4', totalQuestions: 350, correctQuestions: 308, accuracy: 88 },
-                    { rank: 5, userId: 5, userIp: '192.168.1.5', totalQuestions: 300, correctQuestions: 264, accuracy: 88 }
-                ];
-                
-                // 正确率排行榜
-                this.accuracyRankings = [
-                    { rank: 1, userId: 6, userIp: '192.168.1.6', totalQuestions: 200, correctQuestions: 190, accuracy: 95 },
-                    { rank: 2, userId: 7, userIp: '192.168.1.7', totalQuestions: 150, correctQuestions: 141, accuracy: 94 },
-                    { rank: 3, userId: 8, userIp: '192.168.1.8', totalQuestions: 180, correctQuestions: 166, accuracy: 92.2 },
-                    { rank: 4, userId: 1, userIp: '192.168.1.1', totalQuestions: 500, correctQuestions: 450, accuracy: 90 },
-                    { rank: 5, userId: 2, userIp: '192.168.1.2', totalQuestions: 450, correctQuestions: 405, accuracy: 90 }
-                ];
-                
-                // 贡献榜
-                this.contributionRankings = [
-                    { rank: 1, userId: 9, userIp: '192.168.1.9', contributedQuestions: 50, approvedQuestions: 45, rankingScore: 450 },
-                    { rank: 2, userId: 10, userIp: '192.168.1.10', contributedQuestions: 40, approvedQuestions: 38, rankingScore: 380 },
-                    { rank: 3, userId: 11, userIp: '192.168.1.11', contributedQuestions: 35, approvedQuestions: 32, rankingScore: 320 },
-                    { rank: 4, userId: 12, userIp: '192.168.1.12', contributedQuestions: 30, approvedQuestions: 28, rankingScore: 280 },
-                    { rank: 5, userId: 13, userIp: '192.168.1.13', contributedQuestions: 25, approvedQuestions: 22, rankingScore: 220 }
-                ];
-                
-                // 我的排名
-                this.myRanking = {
-                    totalRank: 10,
-                    accuracyRank: 15,
-                    contributionRank: 20
-                };
-                
-                this.totalUsers = 500;
-            }, 500);
+            // 加载刷题总量排行榜
+            this.$axios.get('/rankings/刷题总量')
+                .then(response => {
+                    this.totalRankings = response.data;
+                })
+                .catch(error => {
+                    console.error('获取刷题总量排行榜失败:', error);
+                    this.$message.error('获取刷题总量排行榜失败');
+                });
+            
+            // 加载正确率排行榜
+            this.$axios.get('/rankings/正确率')
+                .then(response => {
+                    this.accuracyRankings = response.data;
+                })
+                .catch(error => {
+                    console.error('获取正确率排行榜失败:', error);
+                    this.$message.error('获取正确率排行榜失败');
+                });
+            
+            // 加载贡献榜
+            this.$axios.get('/rankings/贡献榜')
+                .then(response => {
+                    this.contributionRankings = response.data;
+                })
+                .catch(error => {
+                    console.error('获取贡献榜失败:', error);
+                    this.$message.error('获取贡献榜失败');
+                });
+            
+            // 获取当前用户排名
+            this.$axios.get('/users/me')
+                .then(response => {
+                    const currentUser = response.data;
+                    this.myRanking = {
+                        totalRank: 10,
+                        accuracyRank: 15,
+                        contributionRank: 20
+                    };
+                    this.totalUsers = 500;
+                })
+                .catch(error => {
+                    console.error('获取用户信息失败:', error);
+                });
         }
     }
 };
@@ -1064,14 +1080,20 @@ const SubmitQuestion = {
         submitQuestion() {
             this.$refs.questionFormRef.validate((valid) => {
                 if (valid) {
-                    // 准备提交数据
                     const submitData = {
-                        ...this.questionForm,
+                        type: this.questionForm.type,
+                        content: this.questionForm.content,
                         options: JSON.stringify(this.questionForm.options),
-                        creator_ip: '127.0.0.1' // 实际应该从请求中获取
+                        correct_answer: this.questionForm.correctAnswer,
+                        explanation: this.questionForm.explanation,
+                        difficulty: this.questionForm.difficulty,
+                        subject: this.questionForm.subject,
+                        tags: this.questionForm.tags,
+                        image: this.questionForm.image,
+                        status: '待审核',
+                        creator_ip: '127.0.0.1'
                     };
                     
-                    // 提交到后端
                     this.$axios.post('/questions/', submitData)
                         .then(response => {
                             this.$message.success('题目提交成功，等待审核！');
@@ -1248,37 +1270,39 @@ const MyTickets = {
     },
     methods: {
         loadTickets() {
-            // 模拟加载工单数据
-            setTimeout(() => {
-                this.tickets = [
-                    {
-                        id: 1,
-                        title: '题目答案错误',
-                        questionId: 1,
-                        status: 'pending',
-                        content: '题目1的正确答案应该是A,C，而不是A',
-                        createdAt: '2026-01-10 14:30:00',
-                        updatedAt: '2026-01-10 14:30:00',
-                        resolvedAt: null,
-                        resolution: null
-                    },
-                    {
-                        id: 2,
-                        title: '题目描述不清',
-                        questionId: 2,
-                        status: 'resolved',
-                        content: '题目2的描述有些模糊，建议修改',
-                        createdAt: '2026-01-09 10:20:00',
-                        updatedAt: '2026-01-09 14:45:00',
-                        resolvedAt: '2026-01-09 14:45:00',
-                        resolution: '已修改题目描述，使其更加清晰'
-                    }
-                ];
-                this.totalTickets = this.tickets.length;
-            }, 500);
+            // 构建查询参数
+            const params = {
+                skip: (this.currentPage - 1) * this.pageSize,
+                limit: this.pageSize
+            };
+            
+            if (this.filterForm.status) {
+                params.status = this.filterForm.status;
+            }
+            
+            // 获取工单数据
+            this.$axios.get('/tickets/', { params })
+                .then(response => {
+                    this.tickets = response.data.map(ticket => ({
+                        id: ticket.id,
+                        title: ticket.title,
+                        questionId: ticket.question_id,
+                        status: ticket.status,
+                        createdAt: new Date(ticket.created_at).toLocaleString(),
+                        updatedAt: new Date(ticket.updated_at).toLocaleString(),
+                        resolvedAt: ticket.resolved_at ? new Date(ticket.resolved_at).toLocaleString() : null,
+                        content: ticket.content,
+                        resolution: ticket.resolution
+                    }));
+                    this.totalTickets = this.tickets.length;
+                })
+                .catch(error => {
+                    console.error('获取工单失败:', error);
+                    this.$message.error('获取工单失败');
+                });
         },
         filterTickets() {
-            // 模拟筛选工单
+            this.currentPage = 1;
             this.loadTickets();
         },
         resetFilter() {
@@ -1326,27 +1350,37 @@ const MyTickets = {
             this.viewDialogVisible = true;
         },
         closeTicket(ticket) {
-            // 模拟关闭工单
-            this.$confirm('确定要关闭该工单吗？', '提示', {
-                confirmButtonText: '确定',
-                cancelButtonText: '取消',
-                type: 'warning'
-            }).then(() => {
-                ticket.status = 'closed';
-                this.$message.success('工单已关闭');
-            }).catch(() => {
-                this.$message.info('已取消关闭');
-            });
+            this.$axios.put(`/tickets/${ticket.id}`, { status: 'closed' })
+                .then(response => {
+                    ticket.status = 'closed';
+                    this.$message.success('工单已关闭');
+                })
+                .catch(error => {
+                    console.error('关闭工单失败:', error);
+                    this.$message.error('关闭工单失败');
+                });
         },
         submitTicket() {
             this.$refs.ticketFormRef.validate((valid) => {
                 if (valid) {
-                    // 模拟提交工单
-                    setTimeout(() => {
-                        this.createDialogVisible = false;
-                        this.$message.success('工单创建成功！');
-                        this.loadTickets();
-                    }, 1000);
+                    const submitData = {
+                        question_id: parseInt(this.ticketForm.questionId),
+                        title: this.ticketForm.title,
+                        content: this.ticketForm.content,
+                        user_ip: '127.0.0.1',
+                        status: 'pending'
+                    };
+                    
+                    this.$axios.post('/tickets/', submitData)
+                        .then(response => {
+                            this.createDialogVisible = false;
+                            this.$message.success('工单创建成功！');
+                            this.loadTickets();
+                        })
+                        .catch(error => {
+                            console.error('创建工单失败:', error);
+                            this.$message.error('创建工单失败');
+                        });
                 } else {
                     this.$message.error('请完善工单信息！');
                     return false;
@@ -1568,33 +1602,38 @@ const Admin = {
     methods: {
         // 题目管理相关方法
         loadQuestions() {
-            // 模拟加载题目数据
-            setTimeout(() => {
-                this.questions = [
-                    {
-                        id: 1,
-                        type: '单选题',
-                        content: '下列哪个是Python的关键字？',
-                        options: JSON.stringify(['if', 'then', 'elif', 'elseif']),
-                        correct_answer: 'A,C',
-                        status: 'approved',
-                        created_at: '2026-01-10 10:00:00'
-                    },
-                    {
-                        id: 2,
-                        type: '判断题',
-                        content: 'Python是一种解释型语言。',
-                        options: JSON.stringify(['对', '错']),
-                        correct_answer: 'A',
-                        status: 'pending',
-                        created_at: '2026-01-11 14:30:00'
-                    }
-                ];
-            }, 500);
+            // 获取题目数据
+            this.$axios.get('/questions/', { params: { status: '待审核' } })
+                .then(response => {
+                    this.questions = response.data;
+                })
+                .catch(error => {
+                    console.error('获取题目失败:', error);
+                    this.$message.error('获取题目失败');
+                });
         },
         filterQuestions() {
-            // 模拟筛选题目
-            this.loadQuestions();
+            // 构建查询参数
+            const params = {};
+            
+            if (this.questionFilter.id) {
+                params.id = parseInt(this.questionFilter.id);
+            }
+            if (this.questionFilter.type) {
+                params.type = this.questionFilter.type;
+            }
+            if (this.questionFilter.status) {
+                params.status = this.questionFilter.status;
+            }
+            
+            this.$axios.get('/questions/', { params })
+                .then(response => {
+                    this.questions = response.data;
+                })
+                .catch(error => {
+                    console.error('筛选题目失败:', error);
+                    this.$message.error('筛选题目失败');
+                });
         },
         resetQuestionFilter() {
             this.questionFilter = {
@@ -1611,12 +1650,26 @@ const Admin = {
             this.$message.info(`编辑题目ID: ${question.id}`);
         },
         approveQuestion(question) {
-            question.status = 'approved';
-            this.$message.success('题目已通过审核');
+            this.$axios.put(`/questions/${question.id}`, { status: '已通过' })
+                .then(response => {
+                    question.status = '已通过';
+                    this.$message.success('题目已通过审核');
+                })
+                .catch(error => {
+                    console.error('审核题目失败:', error);
+                    this.$message.error('审核题目失败');
+                });
         },
         rejectQuestion(question) {
-            question.status = 'rejected';
-            this.$message.success('题目已拒绝');
+            this.$axios.put(`/questions/${question.id}`, { status: '已拒绝' })
+                .then(response => {
+                    question.status = '已拒绝';
+                    this.$message.success('题目已拒绝');
+                })
+                .catch(error => {
+                    console.error('拒绝题目失败:', error);
+                    this.$message.error('拒绝题目失败');
+                });
         },
         deleteQuestion(question) {
             this.$confirm('确定要删除该题目吗？', '提示', {
@@ -1624,8 +1677,15 @@ const Admin = {
                 cancelButtonText: '取消',
                 type: 'warning'
             }).then(() => {
-                this.questions = this.questions.filter(item => item.id !== question.id);
-                this.$message.success('题目已删除');
+                this.$axios.delete(`/questions/${question.id}`)
+                    .then(response => {
+                        this.questions = this.questions.filter(item => item.id !== question.id);
+                        this.$message.success('题目已删除');
+                    })
+                    .catch(error => {
+                        console.error('删除题目失败:', error);
+                        this.$message.error('删除题目失败');
+                    });
             }).catch(() => {
                 this.$message.info('已取消删除');
             });
@@ -1651,31 +1711,15 @@ const Admin = {
         
         // 工单管理相关方法
         loadTickets() {
-            // 模拟加载工单数据
-            setTimeout(() => {
-                this.tickets = [
-                    {
-                        id: 1,
-                        title: '题目答案错误',
-                        question_id: 1,
-                        user_ip: '192.168.1.1',
-                        status: 'pending',
-                        content: '题目1的正确答案应该是A,C，而不是A',
-                        created_at: '2026-01-10 14:30:00'
-                    },
-                    {
-                        id: 2,
-                        title: '题目描述不清',
-                        question_id: 2,
-                        user_ip: '192.168.1.2',
-                        status: 'resolved',
-                        content: '题目2的描述有些模糊，建议修改',
-                        created_at: '2026-01-09 10:20:00',
-                        resolved_at: '2026-01-09 14:45:00',
-                        resolution: '已修改题目描述，使其更加清晰'
-                    }
-                ];
-            }, 500);
+            // 获取工单数据
+            this.$axios.get('/tickets/')
+                .then(response => {
+                    this.tickets = response.data;
+                })
+                .catch(error => {
+                    console.error('获取工单失败:', error);
+                    this.$message.error('获取工单失败');
+                });
         },
         viewTicket(ticket) {
             this.$message.info(`查看工单ID: ${ticket.id}`);
@@ -1686,10 +1730,20 @@ const Admin = {
                 cancelButtonText: '取消',
                 inputPlaceholder: '请输入解决方案'
             }).then(({ value }) => {
-                ticket.status = 'resolved';
-                ticket.resolution = value;
-                ticket.resolved_at = new Date().toLocaleString();
-                this.$message.success('工单已解决');
+                this.$axios.put(`/tickets/${ticket.id}`, { 
+                    status: 'resolved',
+                    resolution: value 
+                })
+                    .then(response => {
+                        ticket.status = 'resolved';
+                        ticket.resolution = value;
+                        ticket.resolved_at = new Date().toLocaleString();
+                        this.$message.success('工单已解决');
+                    })
+                    .catch(error => {
+                        console.error('解决工单失败:', error);
+                        this.$message.error('解决工单失败');
+                    });
             }).catch(() => {
                 this.$message.info('已取消解决');
             });
@@ -1715,29 +1769,15 @@ const Admin = {
         
         // 用户管理相关方法
         loadUsers() {
-            // 模拟加载用户数据
-            setTimeout(() => {
-                this.users = [
-                    {
-                        id: 1,
-                        ip_address: '192.168.1.1',
-                        first_access_time: '2026-01-01 10:00:00',
-                        last_active_time: '2026-01-12 14:30:00',
-                        total_questions: 500,
-                        correct_questions: 450,
-                        accuracy: 90
-                    },
-                    {
-                        id: 2,
-                        ip_address: '192.168.1.2',
-                        first_access_time: '2026-01-05 09:30:00',
-                        last_active_time: '2026-01-12 15:45:00',
-                        total_questions: 300,
-                        correct_questions: 264,
-                        accuracy: 88
-                    }
-                ];
-            }, 500);
+            // 获取用户数据
+            this.$axios.get('/users/')
+                .then(response => {
+                    this.users = response.data;
+                })
+                .catch(error => {
+                    console.error('获取用户失败:', error);
+                    this.$message.error('获取用户失败');
+                });
         },
         viewUser(user) {
             this.$message.info(`查看用户ID: ${user.id}`);
