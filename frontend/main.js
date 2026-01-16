@@ -947,14 +947,19 @@ const SubmitQuestion = {
                     </el-form-item>
                     
                     <el-form-item label="题干" prop="content">
-                        <el-input v-model="questionForm.content" type="textarea" :rows="3" placeholder="请输入题干"></el-input>
+                        <el-input 
+                            v-model="questionForm.content" 
+                            type="textarea" 
+                            :rows="3" 
+                            placeholder="请输入题干内容，例如：下列哪个是Python的关键字？"
+                        ></el-input>
                     </el-form-item>
                     
                     <el-form-item label="选项" prop="options">
                         <div v-for="(option, index) in questionForm.options" :key="index" class="option-item">
                             <el-input 
                                 v-model="questionForm.options[index]" 
-                                placeholder="请输入选项内容"
+                                :placeholder="'请输入选项' + String.fromCharCode(65 + index) + '的内容'"
                             >
                                 <template #prepend>{{ String.fromCharCode(65 + index) }}.</template>
                             </el-input>
@@ -963,7 +968,7 @@ const SubmitQuestion = {
                                 icon="el-icon-delete" 
                                 size="small" 
                                 @click="removeOption(index)"
-                                v-if="questionForm.options.length > (questionForm.type === '判断题' ? 2 : 2)"
+                                v-if="canRemoveOption(index)"
                             ></el-button>
                         </div>
                         <el-button 
@@ -978,23 +983,33 @@ const SubmitQuestion = {
                     </el-form-item>
                     
                     <el-form-item label="正确答案" prop="correctAnswer">
-                        <el-input v-model="questionForm.correctAnswer" placeholder="例如：A或A,B,C"></el-input>
+                        <el-input 
+                            v-model="questionForm.correctAnswer" 
+                            :placeholder="getAnswerPlaceholder()"
+                        ></el-input>
+                        <div class="form-tip">{{ getAnswerTip() }}</div>
                     </el-form-item>
                     
                     <el-form-item label="解题思路" prop="explanation">
-                        <el-input v-model="questionForm.explanation" type="textarea" :rows="3" placeholder="请输入解题思路"></el-input>
+                        <el-input 
+                            v-model="questionForm.explanation" 
+                            type="textarea" 
+                            :rows="3" 
+                            placeholder="请输入解题思路，解释为什么正确答案是正确的"
+                        ></el-input>
                     </el-form-item>
                     
                     <el-form-item label="难度等级" prop="difficulty">
                         <el-rate v-model="questionForm.difficulty" :max="5" show-score text-color="#ff9900"></el-rate>
+                        <div class="form-tip">1-5星，1星最简单，5星最难</div>
                     </el-form-item>
                     
                     <el-form-item label="所属科目" prop="subject">
-                        <el-input v-model="questionForm.subject" placeholder="请输入所属科目"></el-input>
+                        <el-input v-model="questionForm.subject" placeholder="请输入所属科目，例如：Python、Java、数据结构"></el-input>
                     </el-form-item>
                     
                     <el-form-item label="标签" prop="tags">
-                        <el-input v-model="questionForm.tags" placeholder="请输入标签，多个标签用逗号分隔"></el-input>
+                        <el-input v-model="questionForm.tags" placeholder="请输入标签，多个标签用逗号分隔，例如：语法,基础,算法"></el-input>
                     </el-form-item>
                     
                     <el-form-item label="图片">
@@ -1039,7 +1054,41 @@ const SubmitQuestion = {
             rules: {
                 type: [{ required: true, message: '请选择题目类型', trigger: 'change' }],
                 content: [{ required: true, message: '请输入题干', trigger: 'blur' }],
-                correctAnswer: [{ required: true, message: '请输入正确答案', trigger: 'blur' }],
+                correctAnswer: [
+                    { required: true, message: '请输入正确答案', trigger: 'blur' },
+                    { 
+                        validator: (rule, value, callback) => {
+                            if (!value) {
+                                callback();
+                                return;
+                            }
+                            // 验证答案格式：单选/判断题为单个字母，多选题为字母逗号分隔
+                            const type = this.questionForm.type;
+                            if (type === '判断题') {
+                                if (!/^[A-Z]$/.test(value)) {
+                                    callback(new Error('判断题答案格式应为A或B'));
+                                } else {
+                                    callback();
+                                }
+                            } else if (type === '单选题') {
+                                if (!/^[A-Z]$/.test(value)) {
+                                    callback(new Error('单选题答案格式应为单个字母（A-Z）'));
+                                } else {
+                                    callback();
+                                }
+                            } else if (type === '多选题') {
+                                if (!/^[A-Z](,[A-Z])*$/i.test(value)) {
+                                    callback(new Error('多选题答案格式应为字母逗号分隔（如：A,B,C）'));
+                                } else {
+                                    callback();
+                                }
+                            } else {
+                                callback();
+                            }
+                        },
+                        trigger: 'blur'
+                    }
+                ],
                 subject: [{ required: true, message: '请输入所属科目', trigger: 'blur' }]
             }
         };
@@ -1065,6 +1114,10 @@ const SubmitQuestion = {
         },
         removeOption(index) {
             this.questionForm.options.splice(index, 1);
+        },
+        canRemoveOption(index) {
+            const minOptions = this.questionForm.type === '判断题' ? 2 : 2;
+            return this.questionForm.options.length > minOptions;
         },
         handleImageChange(file) {
             // 读取图片文件并转换为base64
@@ -1094,16 +1147,63 @@ const SubmitQuestion = {
                         creator_ip: '127.0.0.1'
                     };
                     
+                    // 显示加载状态
+                    const loading = this.$loading({
+                        lock: true,
+                        text: '正在提交题目...',
+                        background: 'rgba(0, 0, 0, 0.7)'
+                    });
+                    
                     this.$axios.post('/questions/', submitData)
                         .then(response => {
+                            loading.close();
                             this.$message.success('题目提交成功，等待审核！');
                             this.resetForm();
                         })
                         .catch(error => {
-                            this.$message.error('题目提交失败，请稍后重试！');
+                            loading.close();
                             console.error('提交失败:', error);
+                            
+                            // 根据错误类型提供不同的提示
+                            let errorMessage = '题目提交失败，请稍后重试！';
+                            
+                            if (error.response) {
+                                const status = error.response.status;
+                                const data = error.response.data;
+                                
+                                if (status === 422) {
+                                    // 验证错误
+                                    if (data.detail && typeof data.detail === 'string') {
+                                        errorMessage = `验证失败：${data.detail}`;
+                                    } else if (data.detail && Array.isArray(data.detail)) {
+                                        // 显示所有验证错误
+                                        const errors = data.detail.map(err => {
+                                            if (err.msg) {
+                                                return err.msg;
+                                            }
+                                            return JSON.stringify(err);
+                                        }).join('；');
+                                        errorMessage = `输入错误：${errors}`;
+                                    }
+                                } else if (status === 400) {
+                                    errorMessage = '请求参数错误，请检查输入内容';
+                                } else if (status === 500) {
+                                    errorMessage = '服务器内部错误，请稍后重试';
+                                }
+                            } else if (error.message) {
+                                errorMessage = `网络错误：${error.message}`;
+                            }
+                            
+                            this.$message.error(errorMessage);
                         });
                 } else {
+                    // 表单验证失败，滚动到第一个错误字段
+                    this.$nextTick(() => {
+                        const errorFields = this.$refs.questionFormRef.fields.filter(field => field.validateState === 'error');
+                        if (errorFields.length > 0) {
+                            errorFields[0].$el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
                     this.$message.error('请完善题目信息！');
                     return false;
                 }
@@ -1113,6 +1213,32 @@ const SubmitQuestion = {
             this.$refs.questionFormRef.resetFields();
             this.questionForm.options = ['', ''];
             this.questionForm.image = '';
+        },
+        getAnswerPlaceholder() {
+            const type = this.questionForm.type;
+            switch (type) {
+                case '判断题':
+                    return '请输入正确答案（A或B）';
+                case '单选题':
+                    return '请输入正确答案（单个字母A-Z）';
+                case '多选题':
+                    return '请输入正确答案（字母逗号分隔，如：A,B,C）';
+                default:
+                    return '请输入正确答案';
+            }
+        },
+        getAnswerTip() {
+            const type = this.questionForm.type;
+            switch (type) {
+                case '判断题':
+                    return '格式要求：A表示对，B表示错';
+                case '单选题':
+                    return '格式要求：单个大写字母（A-Z）';
+                case '多选题':
+                    return '格式要求：多个大写字母用逗号分隔（如：A,B,C）';
+                default:
+                    return '请选择题目类型查看格式要求';
+            }
         }
     }
 };

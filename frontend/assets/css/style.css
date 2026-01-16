@@ -76,6 +76,68 @@ h1, h2, h3, h4, h5, h6 {
     margin-bottom: 16px;
 }
 
+.form-tip {
+    font-size: 12px;
+    color: #909399;
+    margin-top: 4px;
+    line-height: 1.5;
+}
+
+.form-error {
+    color: #f56c6c;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* 表单验证错误样式 */
+.el-form-item.is-error .el-input__inner {
+    border-color: #f56c6c !important;
+}
+
+.el-form-item.is-error .el-textarea__inner {
+    border-color: #f56c6c !important;
+}
+
+.el-form-item.is-error .el-input-group__prepend {
+    border-color: #f56c6c !important;
+}
+
+/* 选项输入框样式 */
+.option-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 8px;
+}
+
+.option-item .el-input {
+    flex: 1;
+}
+
+/* 图片预览样式 */
+.image-preview {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.image-preview img {
+    border-radius: 4px;
+    border: 1px solid #dcdfe6;
+}
+
+/* 上传组件样式 */
+.upload-demo {
+    display: inline-block;
+}
+
+.el-upload__tip {
+    font-size: 12px;
+    color: #909399;
+    margin-top: 4px;
+}
+
 /* 列表样式 */
 .list-item {
     padding: 12px 0;
