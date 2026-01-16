@@ -91,34 +91,34 @@ GRANT ALL PRIVILEGES ON DATABASE onlinejudge TO postgres;
    sudo vi /etc/postgresql/[版本]/main/pg_hba.conf
    
    # 添加以下行
-host    all             all             0.0.0.0/0               md5
+   host    all             all             0.0.0.0/0               md5
    
    # 编辑postgresql.conf文件
-sudo vi /etc/postgresql/[版本]/main/postgresql.conf
+   sudo vi /etc/postgresql/[版本]/main/postgresql.conf
    
    # 修改以下行
-listen_addresses = '*'
+   listen_addresses = '*'
    
    # 重启PostgreSQL服务
-sudo systemctl restart postgresql
+   sudo systemctl restart postgresql
    ```
 
    **示例：SUSE/CentOS/RHEL系统**
    ```bash
    # 编辑pg_hba.conf文件
-sudo vi /var/lib/pgsql/data/pg_hba.conf
+   sudo vi /var/lib/pgsql/data/pg_hba.conf
    
    # 添加以下行
-host    all             all             0.0.0.0/0               md5
+   host    all             all             0.0.0.0/0               md5
    
    # 编辑postgresql.conf文件
-sudo vi /var/lib/pgsql/data/postgresql.conf
+   sudo vi /var/lib/pgsql/data/postgresql.conf
    
    # 修改以下行
-listen_addresses = '*'
+   listen_addresses = '*'
    
    # 重启PostgreSQL服务
-sudo systemctl restart postgresql
+   sudo systemctl restart postgresql
    ```
 
 ### 2.3 部署在线刷题系统
@@ -127,6 +127,10 @@ sudo systemctl restart postgresql
 ```bash
 git clone <项目仓库地址>
 cd OnlineJudge
+
+git restore .
+git pull --rebase origin main
+
 ```
 
 2. 安装项目依赖:
