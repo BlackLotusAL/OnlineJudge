@@ -19,6 +19,34 @@ BACKEND_DIR="$PROJECT_DIR/backend"
 WEB_DIR="/var/www/html/onlinejudge"
 LOG_DIR="/var/log/nginx"
 
+# 检测Linux发行版
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$ID
+    OS_VERSION=$VERSION_ID
+else
+    OS="unknown"
+fi
+
+# 根据发行版确定nginx配置路径
+if [ "$OS" = "ubuntu" ] || [ "$OS" = "debian" ]; then
+    NGINX_CONF_DIR="/etc/nginx/sites-available"
+    NGINX_ENABLED_DIR="/etc/nginx/sites-enabled"
+    NGINX_CONF_FILE="onlinejudge"
+elif [ "$OS" = "centos" ] || [ "$OS" = "rhel" ] || [ "$OS" = "rocky" ] || [ "$OS" = "almalinux" ]; then
+    NGINX_CONF_DIR="/etc/nginx/conf.d"
+    NGINX_ENABLED_DIR="/etc/nginx/conf.d"
+    NGINX_CONF_FILE="onlinejudge.conf"
+else
+    NGINX_CONF_DIR="/etc/nginx/conf.d"
+    NGINX_ENABLED_DIR="/etc/nginx/conf.d"
+    NGINX_CONF_FILE="onlinejudge.conf"
+fi
+
+echo "检测到操作系统: $OS $OS_VERSION"
+echo "Nginx配置目录: $NGINX_CONF_DIR"
+echo ""
+
 # 诊断函数
 check_status() {
     if [ $? -eq 0 ]; then
@@ -172,7 +200,7 @@ if pgrep -f "uvicorn" > /dev/null; then
     
     echo ""
     echo "后端端口检查:"
-    if netstat -tuln | grep -q ":8000"; then
+    if netstat -tuln 2>/dev/null | grep -q ":8000" || ss -tuln 2>/dev/null | grep -q ":8000"; then
         check_status "8000端口监听中"
     else
         check_status "8000端口监听中"
@@ -189,9 +217,10 @@ if pgrep -f "uvicorn" > /dev/null; then
     
     echo ""
     echo "具体API端点测试:"
-    echo "  /api/questions/: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/api/questions/)"
-    echo "  /api/rankings/刷题总量: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/api/rankings/刷题总量)"
-    echo "  /api/exams/history/127.0.0.1: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/api/exams/history/127.0.0.1)"
+    echo "  /api/: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/)"
+    echo "  /api/questions/: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/questions/)"
+    echo "  /api/rankings/刷题总量: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/rankings/刷题总量)"
+    echo "  /api/exams/history/127.0.0.1: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/exams/history/127.0.0.1)"
 else
     echo "后端服务状态: 未运行"
     check_status "后端服务运行中"
@@ -210,7 +239,7 @@ if systemctl is-active --quiet nginx; then
     
     echo ""
     echo "Nginx端口检查:"
-    if netstat -tuln | grep -q ":80"; then
+    if netstat -tuln 2>/dev/null | grep -q ":80" || ss -tuln 2>/dev/null | grep -q ":80"; then
         check_status "80端口监听中"
     else
         check_status "80端口监听中"
@@ -222,17 +251,24 @@ if systemctl is-active --quiet nginx; then
     
     echo ""
     echo "Nginx配置文件:"
-    if [ -f "/etc/nginx/sites-available/onlinejudge" ]; then
+    echo "配置目录: $NGINX_CONF_DIR"
+    echo "配置文件: $NGINX_CONF_FILE"
+    if [ -f "$NGINX_CONF_DIR/$NGINX_CONF_FILE" ]; then
         check_status "Nginx配置文件存在"
-        echo "配置文件路径: /etc/nginx/sites-available/onlinejudge"
     else
         check_status "Nginx配置文件存在"
     fi
     
-    if [ -L "/etc/nginx/sites-enabled/onlinejudge" ]; then
-        check_status "Nginx配置已启用"
+    echo ""
+    echo "Nginx配置启用状态:"
+    if [ "$OS" = "ubuntu" ] || [ "$OS" = "debian" ]; then
+        if [ -L "$NGINX_ENABLED_DIR/$NGINX_CONF_FILE" ]; then
+            check_status "Nginx配置已启用"
+        else
+            check_status "Nginx配置已启用"
+        fi
     else
-        check_status "Nginx配置已启用"
+        check_status "Nginx配置已启用 (CentOS/RHEL自动启用)"
     fi
 else
     echo "Nginx服务状态: 未运行"

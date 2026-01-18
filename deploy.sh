@@ -23,6 +23,34 @@ FRONTEND_DIR="$PROJECT_DIR/frontend"
 BACKEND_DIR="$PROJECT_DIR/backend"
 WEB_DIR="/var/www/html/onlinejudge"
 
+# 检测Linux发行版
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$ID
+    OS_VERSION=$VERSION_ID
+else
+    OS="unknown"
+fi
+
+# 根据发行版确定nginx配置路径
+if [ "$OS" = "ubuntu" ] || [ "$OS" = "debian" ]; then
+    NGINX_CONF_DIR="/etc/nginx/sites-available"
+    NGINX_ENABLED_DIR="/etc/nginx/sites-enabled"
+    NGINX_CONF_FILE="onlinejudge"
+elif [ "$OS" = "centos" ] || [ "$OS" = "rhel" ] || [ "$OS" = "rocky" ] || [ "$OS" = "almalinux" ]; then
+    NGINX_CONF_DIR="/etc/nginx/conf.d"
+    NGINX_ENABLED_DIR="/etc/nginx/conf.d"
+    NGINX_CONF_FILE="onlinejudge.conf"
+else
+    NGINX_CONF_DIR="/etc/nginx/conf.d"
+    NGINX_ENABLED_DIR="/etc/nginx/conf.d"
+    NGINX_CONF_FILE="onlinejudge.conf"
+fi
+
+echo "检测到操作系统: $OS $OS_VERSION"
+echo "Nginx配置目录: $NGINX_CONF_DIR"
+echo ""
+
 # 步骤1：从Git拉取最新代码
 echo -e "${YELLOW}[1/8] 从Git拉取最新代码...${NC}"
 cd $PROJECT_DIR
@@ -58,7 +86,8 @@ echo ""
 
 # 步骤4：更新nginx配置
 echo -e "${YELLOW}[4/8] 更新nginx配置...${NC}"
-tee /etc/nginx/sites-available/onlinejudge > /dev/null << 'EOF'
+mkdir -p $NGINX_CONF_DIR
+tee $NGINX_CONF_DIR/$NGINX_CONF_FILE > /dev/null << 'EOF'
 server {
     listen 80;
     server_name 47.83.236.198;
@@ -100,6 +129,7 @@ EOF
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ nginx配置更新成功${NC}"
+    echo "配置文件路径: $NGINX_CONF_DIR/$NGINX_CONF_FILE"
 else
     echo -e "${RED}✗ nginx配置更新失败${NC}"
     exit 1
@@ -176,8 +206,20 @@ echo "nginx服务："
 systemctl status nginx --no-pager | head -5
 echo ""
 
+echo "nginx配置："
+echo "配置文件: $NGINX_CONF_DIR/$NGINX_CONF_FILE"
+if [ -f "$NGINX_CONF_DIR/$NGINX_CONF_FILE" ]; then
+    echo "配置文件存在: 是"
+else
+    echo "配置文件存在: 否"
+fi
+echo ""
+
 echo "API测试："
-curl -s http://localhost:8000/api/questions/ | head -5
+echo "测试根路径: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/)"
+echo "测试questions: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/questions/)"
+echo "测试rankings: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/rankings/刷题总量)"
+echo "测试exams: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/exams/history/127.0.0.1)"
 echo ""
 
 echo "========================================="
