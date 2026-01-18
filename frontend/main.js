@@ -1022,13 +1022,36 @@ const SubmitQuestion = {
                         ></el-input>
                     </el-form-item>
                     
-                    <el-form-item label="难度等级" prop="difficulty">
+                    <el-form-item label="难度评分" prop="difficulty">
                         <el-rate v-model="questionForm.difficulty" :max="5" show-score text-color="#ff9900"></el-rate>
                         <div class="form-tip">1-5星，1星最简单，5星最难</div>
                     </el-form-item>
                     
-                    <el-form-item label="所属科目" prop="subject">
-                        <el-input v-model="questionForm.subject" placeholder="请输入所属科目，例如：Python、Java、数据结构"></el-input>
+                    <el-form-item label="编程语言" prop="language">
+                        <el-select v-model="questionForm.language" placeholder="请选择编程语言">
+                            <el-option label="Java" value="Java"></el-option>
+                            <el-option label="C" value="C"></el-option>
+                            <el-option label="C++" value="C++"></el-option>
+                            <el-option label="Rust" value="Rust"></el-option>
+                            <el-option label="Python" value="Python"></el-option>
+                        </el-select>
+                    </el-form-item>
+                    
+                    <el-form-item label="难度等级" prop="difficultyLevel">
+                        <el-select v-model="questionForm.difficultyLevel" placeholder="请选择难度等级">
+                            <el-option label="入门级" value="入门级"></el-option>
+                            <el-option label="工作级" value="工作级"></el-option>
+                            <el-option label="专业级" value="专业级"></el-option>
+                        </el-select>
+                    </el-form-item>
+                    
+                    <el-form-item label="科目分类" prop="subjectCategory">
+                        <el-select v-model="questionForm.subjectCategory" placeholder="请选择科目分类">
+                            <el-option label="科目一" value="科目一"></el-option>
+                            <el-option label="科目二" value="科目二"></el-option>
+                            <el-option label="科目三" value="科目三"></el-option>
+                            <el-option label="科目四" value="科目四"></el-option>
+                        </el-select>
                     </el-form-item>
                     
                     <el-form-item label="标签" prop="tags">
@@ -1071,7 +1094,9 @@ const SubmitQuestion = {
                 correctAnswerArray: [],
                 explanation: '',
                 difficulty: 1,
-                subject: '',
+                language: '',
+                difficultyLevel: '',
+                subjectCategory: '',
                 tags: '',
                 image: ''
             },
@@ -1113,7 +1138,9 @@ const SubmitQuestion = {
                         trigger: 'blur'
                     }
                 ],
-                subject: [{ required: true, message: '请输入所属科目', trigger: 'blur' }]
+                language: [{ required: true, message: '请选择编程语言', trigger: 'change' }],
+                difficultyLevel: [{ required: true, message: '请选择难度等级', trigger: 'change' }],
+                subjectCategory: [{ required: true, message: '请选择科目分类', trigger: 'change' }]
             }
         };
     },

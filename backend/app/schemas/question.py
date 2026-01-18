@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, Dict
-from app.models.question import QuestionType, QuestionStatus
+from app.models.question import QuestionType, QuestionStatus, Language, DifficultyLevel, SubjectCategory
 
 class QuestionBase(BaseModel):
     type: QuestionType = Field(..., description="题目类型")
@@ -10,7 +10,9 @@ class QuestionBase(BaseModel):
     correct_answer: str = Field(..., max_length=10, description="正确答案")
     explanation: Optional[str] = Field(None, description="解题思路")
     difficulty: float = Field(default=1.0, ge=1.0, le=5.0, description="难度等级，1-5")
-    subject: str = Field(..., max_length=50, description="所属科目")
+    language: Optional[Language] = Field(None, description="编程语言")
+    difficulty_level: Optional[DifficultyLevel] = Field(None, description="难度等级")
+    subject_category: Optional[SubjectCategory] = Field(None, description="科目分类")
     tags: Optional[str] = Field(None, max_length=255, description="标签，逗号分隔")
     image: Optional[str] = Field(None, description="图片，base64编码或文件路径")
 
@@ -23,7 +25,9 @@ class QuestionUpdate(BaseModel):
     correct_answer: Optional[str] = Field(None, max_length=10, description="正确答案")
     explanation: Optional[str] = Field(None, description="解题思路")
     difficulty: Optional[float] = Field(None, ge=1.0, le=5.0, description="难度等级，1-5")
-    subject: Optional[str] = Field(None, max_length=50, description="所属科目")
+    language: Optional[Language] = Field(None, description="编程语言")
+    difficulty_level: Optional[DifficultyLevel] = Field(None, description="难度等级")
+    subject_category: Optional[SubjectCategory] = Field(None, description="科目分类")
     tags: Optional[str] = Field(None, max_length=255, description="标签，逗号分隔")
     image: Optional[str] = Field(None, description="图片，base64编码或文件路径")
     status: Optional[QuestionStatus] = Field(None, description="题目状态")

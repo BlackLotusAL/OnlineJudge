@@ -17,6 +17,27 @@ class QuestionStatus(str, enum.Enum):
     rejected = "已拒绝"
     draft = "草稿"
 
+# 语言枚举
+class Language(str, enum.Enum):
+    java = "Java"
+    c = "C"
+    cpp = "C++"
+    rust = "Rust"
+    python = "Python"
+
+# 难度等级枚举
+class DifficultyLevel(str, enum.Enum):
+    beginner = "入门级"
+    intermediate = "工作级"
+    advanced = "专业级"
+
+# 科目分类枚举
+class SubjectCategory(str, enum.Enum):
+    subject1 = "科目一"
+    subject2 = "科目二"
+    subject3 = "科目三"
+    subject4 = "科目四"
+
 class Question(Base):
     __tablename__ = "questions"
     
@@ -28,7 +49,9 @@ class Question(Base):
     correct_answer = Column(String(10), nullable=False, comment="正确答案")
     explanation = Column(Text, nullable=True, comment="解题思路")
     difficulty = Column(Float, default=1.0, comment="难度等级，1-5")
-    subject = Column(String(50), nullable=False, comment="所属科目")
+    language = Column(Enum(Language), nullable=True, comment="编程语言")
+    difficulty_level = Column(Enum(DifficultyLevel), nullable=True, comment="难度等级")
+    subject_category = Column(Enum(SubjectCategory), nullable=True, comment="科目分类")
     tags = Column(String(255), nullable=True, comment="标签，逗号分隔")
     image = Column(Text, nullable=True, comment="图片，base64编码或文件路径")
     creator_ip = Column(String(15), nullable=True, comment="创建者IP")
