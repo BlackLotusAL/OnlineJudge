@@ -4,6 +4,24 @@ export default {
             <h1>题库浏览</h1>
             
             <el-card shadow="hover" class="filter-card">
+                <template #header>
+                    <div class="card-header">
+                        <span>筛选条件</span>
+                        <div class="header-actions">
+                            <el-button type="success" @click="exportQuestions('json')">导出JSON</el-button>
+                            <el-button type="success" @click="exportQuestions('excel')">导出Excel</el-button>
+                            <el-upload
+                                action="#"
+                                :auto-upload="false"
+                                :on-change="handleImport"
+                                :show-file-list="false"
+                                accept=".json,.xlsx,.xls"
+                            >
+                                <el-button type="primary">导入题目</el-button>
+                            </el-upload>
+                        </div>
+                    </div>
+                </template>
                 <el-form :inline="true" :model="searchForm" class="search-form">
                     <el-form-item label="题目类型">
                         <el-select v-model="searchForm.type" placeholder="请选择题目类型">
@@ -180,6 +198,55 @@ export default {
                 name: 'MyTickets',
                 params: { questionId: question.id }
             });
+        },
+        exportQuestions(format) {
+            this.$axios.get('/questions/export', {
+                params: {
+                    type: this.searchForm.type,
+                    status: this.searchForm.status,
+                    subject: this.searchForm.subject,
+                    difficulty_min: this.searchForm.difficulty[0],
+                    difficulty_max: this.searchForm.difficulty[1],
+                    format: format
+                },
+                responseType: 'blob'
+            })
+                .then(response => {
+                    const url = window.URL.createObjectURL(new Blob([response.data]));
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `questions_export_${new Date().getTime()}.${format === 'json' ? 'json' : 'xlsx'}`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                    this.$message.success('导出成功！');
+                })
+                .catch(error => {
+                    console.error('导出失败:', error);
+                    this.$message.error('导出失败！');
+                });
+        },
+        handleImport(file) {
+            const formData = new FormData();
+            formData.append('file', file.raw);
+            
+            this.$axios.post('/questions/import', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+                .then(response => {
+                    this.$message.success(`导入完成！成功导入${response.data.imported}道题目，失败${response.data.failed}道`);
+                    if (response.data.errors && response.data.errors.length > 0) {
+                        this.$message.warning(`部分题目导入失败：${response.data.errors.join('; ')}`);
+                    }
+                    this.searchQuestions();
+                })
+                .catch(error => {
+                    console.error('导入失败:', error);
+                    this.$message.error('导入失败！');
+                });
         }
     }
 };

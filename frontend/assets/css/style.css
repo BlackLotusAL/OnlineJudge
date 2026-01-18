@@ -453,6 +453,23 @@ h1, h2, h3, h4, h5, h6 {
     margin-top: 20px;
 }
 
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.header-actions .el-button {
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
 /* 题目详情对话框样式 */
 .question-detail {
     padding: 20px;
