@@ -18,3 +18,5 @@ class User(Base):
     single_total = Column(Integer, default=0, comment="单选题总数")
     multiple_total = Column(Integer, default=0, comment="多选题总数")
     judge_total = Column(Integer, default=0, comment="判断题总数")
+    contributed_questions = Column(Integer, default=0, comment="贡献题目数")
+    approved_questions = Column(Integer, default=0, comment="审核通过题目数")

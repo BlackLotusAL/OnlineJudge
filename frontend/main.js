@@ -542,18 +542,22 @@ const Exams = {
             // 获取考试历史
             this.$axios.get('/exams/history/127.0.0.1')
                 .then(response => {
+                    console.log('考试历史数据:', response.data);
                     this.examHistory = response.data.map(exam => ({
                         id: exam.id,
-                        startTime: new Date(exam.start_time).toLocaleString(),
+                        startTime: exam.start_time ? new Date(exam.start_time).toLocaleString() : '',
                         endTime: exam.end_time ? new Date(exam.end_time).toLocaleString() : '',
                         status: exam.status,
-                        totalScore: exam.total_score,
-                        obtainedScore: exam.obtained_score,
-                        accuracy: exam.accuracy
+                        totalScore: exam.total_score || 0,
+                        obtainedScore: exam.obtained_score || 0,
+                        accuracy: exam.accuracy || 0
                     }));
                 })
                 .catch(error => {
                     console.error('获取考试历史失败:', error);
+                    if (error.response) {
+                        console.error('错误响应:', error.response.data);
+                    }
                     this.$message.error('获取考试历史失败');
                 });
         },
@@ -912,20 +916,13 @@ const Rankings = {
                     this.$message.error('获取贡献榜失败');
                 });
             
-            // 获取当前用户排名
-            this.$axios.get('/users/me')
-                .then(response => {
-                    const currentUser = response.data;
-                    this.myRanking = {
-                        totalRank: 10,
-                        accuracyRank: 15,
-                        contributionRank: 20
-                    };
-                    this.totalUsers = 500;
-                })
-                .catch(error => {
-                    console.error('获取用户信息失败:', error);
-                });
+            // 获取当前用户排名（暂时使用模拟数据）
+            this.myRanking = {
+                totalRank: 10,
+                accuracyRank: 15,
+                contributionRank: 20
+            };
+            this.totalUsers = 500;
         }
     }
 };
@@ -2061,7 +2058,7 @@ const app = createApp({
 
 // 配置Axios
 app.config.globalProperties.$axios = axios;
-axios.defaults.baseURL = 'http://47.83.236.198:8000/api';
+axios.defaults.baseURL = '/api';
 
 // 使用插件
 app.use(router);
