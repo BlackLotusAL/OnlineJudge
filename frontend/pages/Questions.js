@@ -47,11 +47,13 @@ export default {
                         <el-tag v-for="tag in scope.row.tags.split(',')" :key="tag" size="small">{{ tag }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column label="操作" width="180">
+                <el-table-column label="操作" width="240">
                     <template #default="scope">
-                        <el-button type="primary" size="small" @click="viewQuestion(scope.row)">查看详情</el-button>
-                        <el-button size="small" @click="collectQuestion(scope.row)">收藏</el-button>
-                        <el-button type="danger" size="small" @click="reportQuestion(scope.row)">纠错</el-button>
+                        <div class="action-buttons">
+                            <el-button type="primary" @click="viewQuestion(scope.row)">查看详情</el-button>
+                            <el-button @click="collectQuestion(scope.row)">收藏</el-button>
+                            <el-button type="danger" @click="reportQuestion(scope.row)">纠错</el-button>
+                        </div>
                     </template>
                 </el-table-column>
             </el-table>
