@@ -31,6 +31,21 @@ app.include_router(wrong_answers.router, prefix="/api/wrong-answers", tags=["wro
 def root():
     return {"message": "Welcome to Online Judge System"}
 
+@app.get("/api")
+def api_root():
+    return {
+        "message": "Online Judge API",
+        "version": "1.0.0",
+        "endpoints": {
+            "users": "/api/users",
+            "questions": "/api/questions",
+            "exams": "/api/exams",
+            "tickets": "/api/tickets",
+            "rankings": "/api/rankings",
+            "wrong_answers": "/api/wrong-answers"
+        }
+    }
+
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
