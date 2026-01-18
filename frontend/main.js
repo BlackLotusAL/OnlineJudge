@@ -421,7 +421,7 @@ const Exams = {
             currentQuestionIndex: 0,
             currentQuestion: null,
             answerForm: {
-                answer: ''
+                answer: null
             },
             answers: {},
             timer: null,
@@ -503,15 +503,15 @@ const Exams = {
                 this.answers[this.currentQuestion.id] = this.answerForm.answer;
                 this.currentQuestionIndex--;
                 this.currentQuestion = this.examQuestions[this.currentQuestionIndex];
-                this.answerForm.answer = this.answers[this.currentQuestion.id] || '';
+                this.answerForm.answer = this.answers[this.currentQuestion.id] || (this.currentQuestion.type === '多选题' ? [] : null);
             }
         },
         nextQuestion() {
-            if (this.currentQuestionIndex < this.examQuestions.length - 1) {
+            if (this.currentQuestionIndex < this.examQuestions.length -1) {
                 this.answers[this.currentQuestion.id] = this.answerForm.answer;
                 this.currentQuestionIndex++;
                 this.currentQuestion = this.examQuestions[this.currentQuestionIndex];
-                this.answerForm.answer = this.answers[this.currentQuestion.id] || '';
+                this.answerForm.answer = this.answers[this.currentQuestion.id] || (this.currentQuestion.type === '多选题' ? [] : null);
             }
         },
         submitExam() {
