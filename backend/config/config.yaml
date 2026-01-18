@@ -4,13 +4,20 @@ server:
   debug: true
 
 database:
-   host: "localhost"
-   port: 5432
-   name: "onlinejudge"
-   user: "postgres"
-   password: "postgres"
+  host: "localhost"
+  port: 5432
+  name: "onlinejudge"
+  user: "postgres"
+  password: "postgres"
 
 paths:
   upload_dir: "./uploads"
   backup_dir: "./backups"
   logs_dir: "./logs"
+
+admin:
+  allowed_ips:
+    - "127.0.0.1"
+    - "47.83.236.198"
+    - "47.83.236.199"
+  enable_ip_whitelist: true

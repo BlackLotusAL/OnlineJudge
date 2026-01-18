@@ -159,22 +159,67 @@ export default {
                                     <span>系统配置</span>
                                 </div>
                             </template>
-                            <el-form :model="systemConfig" label-width="150px">
-                                <el-form-item label="系统名称">
-                                    <el-input v-model="systemConfig.systemName"></el-input>
-                                </el-form-item>
-                                <el-form-item label="默认考试时长">
-                                    <el-input-number v-model="systemConfig.defaultExamDuration" :min="300" :max="7200" :step="60"></el-input-number>
-                                    <span class="unit">秒</span>
-                                </el-form-item>
-                                <el-form-item label="默认题目数量">
-                                    <el-input-number v-model="systemConfig.defaultQuestionCount" :min="10" :max="100" :step="10"></el-input-number>
-                                    <span class="unit">题</span>
-                                </el-form-item>
-                                <el-form-item>
-                                    <el-button type="primary" @click="saveConfig">保存配置</el-button>
-                                </el-form-item>
-                            </el-form>
+                            
+                            <el-tabs v-model="configTab">
+                                <el-tab-pane label="基本设置" name="basic">
+                                    <el-form :model="systemConfig" label-width="150px">
+                                        <el-form-item label="系统名称">
+                                            <el-input v-model="systemConfig.systemName"></el-input>
+                                        </el-form-item>
+                                        <el-form-item label="默认考试时长">
+                                            <el-input-number v-model="systemConfig.defaultExamDuration" :min="300" :max="7200" :step="60"></el-input-number>
+                                            <span class="unit">秒</span>
+                                        </el-form-item>
+                                        <el-form-item label="默认题目数量">
+                                            <el-input-number v-model="systemConfig.defaultQuestionCount" :min="10" :max="100" :step="10"></el-input-number>
+                                            <span class="unit">题</span>
+                                        </el-form-item>
+                                        <el-form-item>
+                                            <el-button type="primary" @click="saveConfig">保存配置</el-button>
+                                        </el-form-item>
+                                    </el-form>
+                                </el-tab-pane>
+                                
+                                <el-tab-pane label="IP白名单" name="ip-whitelist">
+                                    <el-form :model="ipWhitelistConfig" label-width="180px">
+                                        <el-form-item label="启用IP白名单">
+                                            <el-switch v-model="ipWhitelistConfig.enabled"></el-switch>
+                                            <div class="form-tip">启用后，只有白名单中的IP可以访问后台管理</div>
+                                        </el-form-item>
+                                        <el-form-item label="允许的IP地址">
+                                            <el-input 
+                                                type="textarea" 
+                                                :rows="4" 
+                                                v-model="ipWhitelistConfig.ips" 
+                                                placeholder="每行一个IP地址，例如：&#10;127.0.0.1&#10;47.83.236.198&#10;47.83.236.199"
+                                            ></el-input>
+                                            <div class="form-tip">每行输入一个IP地址，支持IPv4格式</div>
+                                        </el-form-item>
+                                        <el-form-item>
+                                            <el-button type="primary" @click="saveIpWhitelist">保存IP白名单</el-button>
+                                            <el-button @click="loadIpWhitelist">刷新配置</el-button>
+                                        </el-form-item>
+                                    </el-form>
+                                    
+                                    <el-divider>当前IP白名单</el-divider>
+                                    
+                                    <el-table :data="ipWhitelistConfig.currentIps" style="width: 100%">
+                                        <el-table-column prop="ip" label="IP地址" width="200"></el-table-column>
+                                        <el-table-column label="操作" width="150">
+                                            <template #default="scope">
+                                                <el-button 
+                                                    type="danger" 
+                                                    size="small" 
+                                                    @click="removeIp(scope.row)"
+                                                    v-if="ipWhitelistConfig.enabled"
+                                                >
+                                                    移除
+                                                </el-button>
+                                            </template>
+                                        </el-table-column>
+                                    </el-table>
+                                </el-tab-pane>
+                            </el-tabs>
                         </el-card>
                     </div>
                 </el-tab-pane>
@@ -184,6 +229,7 @@ export default {
     data() {
         return {
             activeTab: 'questions',
+            configTab: 'basic',
             // 题目管理
             questions: [],
             questionFilter: {
@@ -200,6 +246,12 @@ export default {
                 systemName: '在线刷题系统',
                 defaultExamDuration: 3600,
                 defaultQuestionCount: 30
+            },
+            // IP白名单配置
+            ipWhitelistConfig: {
+                enabled: false,
+                ips: '',
+                currentIps: []
             }
         };
     },
@@ -207,6 +259,7 @@ export default {
         this.loadQuestions();
         this.loadTickets();
         this.loadUsers();
+        this.loadIpWhitelist();
     },
     methods: {
         // 题目管理相关方法
@@ -389,6 +442,52 @@ export default {
         // 系统配置相关方法
         saveConfig() {
             this.$message.success('系统配置已保存');
+        },
+        
+        // IP白名单相关方法
+        loadIpWhitelist() {
+            this.$axios.get('/admin/config')
+                .then(response => {
+                    this.ipWhitelistConfig.enabled = response.data.enable_ip_whitelist;
+                    this.ipWhitelistConfig.ips = response.data.allowed_ips.join('\n');
+                    this.ipWhitelistConfig.currentIps = response.data.allowed_ips.map(ip => ({ ip }));
+                })
+                .catch(error => {
+                    console.error('加载IP白名单失败:', error);
+                    this.$message.error('加载IP白名单失败');
+                });
+        },
+        saveIpWhitelist() {
+            const ips = this.ipWhitelistConfig.ips.split('\n').map(ip => ip.trim()).filter(ip => ip);
+            
+            this.$axios.put('/admin/config', {
+                enable_ip_whitelist: this.ipWhitelistConfig.enabled,
+                allowed_ips: ips
+            })
+                .then(response => {
+                    this.$message.success('IP白名单保存成功');
+                    this.loadIpWhitelist();
+                })
+                .catch(error => {
+                    console.error('保存IP白名单失败:', error);
+                    this.$message.error('保存IP白名单失败');
+                });
+        },
+        removeIp(ip) {
+            const ips = this.ipWhitelistConfig.currentIps.filter(item => item.ip !== ip.ip);
+            
+            this.$axios.put('/admin/config', {
+                enable_ip_whitelist: this.ipWhitelistConfig.enabled,
+                allowed_ips: ips.map(item => item.ip)
+            })
+                .then(response => {
+                    this.$message.success('IP移除成功');
+                    this.loadIpWhitelist();
+                })
+                .catch(error => {
+                    console.error('移除IP失败:', error);
+                    this.$message.error('移除IP失败');
+                });
         }
     }
 };
