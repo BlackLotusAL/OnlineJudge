@@ -28,19 +28,27 @@ else
     OS="unknown"
 fi
 
-# 根据发行版确定nginx配置路径
-if [ "$OS" = "ubuntu" ] || [ "$OS" = "debian" ]; then
+# 检测nginx配置目录（优先使用实际存在的目录）
+if [ -d "/etc/nginx/conf.d" ] && [ "$(ls -A /etc/nginx/conf.d/*.conf 2>/dev/null)" ]; then
+    NGINX_CONF_DIR="/etc/nginx/conf.d"
+    NGINX_ENABLED_DIR="/etc/nginx/conf.d"
+    NGINX_CONF_FILE="onlinejudge.conf"
+    NGINX_USE_SYMLINK=false
+elif [ "$OS" = "ubuntu" ] || [ "$OS" = "debian" ]; then
     NGINX_CONF_DIR="/etc/nginx/sites-available"
     NGINX_ENABLED_DIR="/etc/nginx/sites-enabled"
     NGINX_CONF_FILE="onlinejudge"
+    NGINX_USE_SYMLINK=true
 elif [ "$OS" = "centos" ] || [ "$OS" = "rhel" ] || [ "$OS" = "rocky" ] || [ "$OS" = "almalinux" ]; then
     NGINX_CONF_DIR="/etc/nginx/conf.d"
     NGINX_ENABLED_DIR="/etc/nginx/conf.d"
     NGINX_CONF_FILE="onlinejudge.conf"
+    NGINX_USE_SYMLINK=false
 else
     NGINX_CONF_DIR="/etc/nginx/conf.d"
     NGINX_ENABLED_DIR="/etc/nginx/conf.d"
     NGINX_CONF_FILE="onlinejudge.conf"
+    NGINX_USE_SYMLINK=false
 fi
 
 echo "检测到操作系统: $OS $OS_VERSION"
@@ -261,14 +269,14 @@ if systemctl is-active --quiet nginx; then
     
     echo ""
     echo "Nginx配置启用状态:"
-    if [ "$OS" = "ubuntu" ] || [ "$OS" = "debian" ]; then
+    if [ "$NGINX_USE_SYMLINK" = "true" ]; then
         if [ -L "$NGINX_ENABLED_DIR/$NGINX_CONF_FILE" ]; then
             check_status "Nginx配置已启用"
         else
             check_status "Nginx配置已启用"
         fi
     else
-        check_status "Nginx配置已启用 (CentOS/RHEL自动启用)"
+        check_status "Nginx配置已启用 (conf.d自动启用)"
     fi
 else
     echo "Nginx服务状态: 未运行"
