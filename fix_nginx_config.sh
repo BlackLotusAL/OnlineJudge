@@ -233,7 +233,6 @@ grep -E "(root|proxy_pass)" $NGINX_CONF_DIR/$NGINX_CONF_FILE
 echo ""
 
 echo "API测试:"
-echo "  /api/: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/)"
 echo "  /api/questions/: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/questions/)"
 echo "  /api/rankings/刷题总量: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/rankings/刷题总量)"
 echo "  /api/exams/history/127.0.0.1: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/exams/history/127.0.0.1)"

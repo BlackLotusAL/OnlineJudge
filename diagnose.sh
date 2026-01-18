@@ -215,17 +215,7 @@ if pgrep -f "uvicorn" > /dev/null; then
     fi
     
     echo ""
-    echo "后端API测试:"
-    API_TEST=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/api/)
-    if [ "$API_TEST" = "200" ]; then
-        check_status "后端API响应正常 (HTTP $API_TEST)"
-    else
-        check_status "后端API响应正常 (HTTP $API_TEST)"
-    fi
-    
-    echo ""
     echo "具体API端点测试:"
-    echo "  /api/: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/)"
     echo "  /api/questions/: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/questions/)"
     echo "  /api/rankings/刷题总量: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/rankings/刷题总量)"
     echo "  /api/exams/history/127.0.0.1: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/exams/history/127.0.0.1)"

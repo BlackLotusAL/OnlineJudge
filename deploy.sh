@@ -247,7 +247,6 @@ fi
 echo ""
 
 echo "API测试："
-echo "测试根路径: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/)"
 echo "测试questions: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/questions/)"
 echo "测试rankings: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/rankings/刷题总量)"
 echo "测试exams: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://localhost:8000/api/exams/history/127.0.0.1)"
