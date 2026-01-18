@@ -127,11 +127,11 @@ def submit_exam(exam_id: int, answers: exam_schemas.ExamSubmit, db: Session = De
     
     return exam
 
-@router.get("/history/{user_id}", response_model=list[exam_schemas.Exam])
-def get_exam_history(user_id: int, db: Session = Depends(get_db), skip: int = 0, limit: int = 10):
+@router.get("/history/{user_ip}", response_model=list[exam_schemas.Exam])
+def get_exam_history(user_ip: str, db: Session = Depends(get_db), skip: int = 0, limit: int = 10):
     # 查询数据库中的考试历史
     exams = db.query(exam_models.Exam).filter(
-        exam_models.Exam.user_ip == user_id
+        exam_models.Exam.user_ip == user_ip
     ).order_by(exam_models.Exam.start_time.desc()).offset(skip).limit(limit).all()
     
     return exams
