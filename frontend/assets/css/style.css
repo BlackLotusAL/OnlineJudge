@@ -118,6 +118,117 @@ h1, h2, h3, h4, h5, h6 {
     flex-shrink: 0;
 }
 
+/* 提交题目页面样式 */
+.submit-question {
+    padding: 20px;
+}
+
+.submit-card {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.submit-question .el-form-item {
+    margin-bottom: 24px;
+}
+
+.submit-question .el-form-item__label {
+    font-weight: 500;
+    color: #303133;
+}
+
+.submit-question .el-input,
+.submit-question .el-textarea,
+.submit-question .el-select {
+    width: 100%;
+}
+
+.submit-question .el-input__inner {
+    border-radius: 4px;
+}
+
+.submit-question .el-input__prepend {
+    background-color: #f5f7fa;
+    border-color: #dcdfe6;
+    color: #606266;
+    font-weight: 500;
+    min-width: 40px;
+    text-align: center;
+}
+
+.submit-question .el-button {
+    border-radius: 4px;
+}
+
+.submit-question .el-upload {
+    width: 100%;
+}
+
+.submit-question .el-upload__tip {
+    margin-top: 8px;
+    color: #909399;
+    font-size: 12px;
+}
+
+.submit-question .image-preview {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.submit-question .image-preview img {
+    border-radius: 4px;
+    border: 1px solid #dcdfe6;
+}
+
+.submit-question .el-rate {
+    display: flex;
+    align-items: center;
+}
+
+.submit-question .el-form-item__content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.submit-question .option-item {
+    margin-bottom: 12px;
+}
+
+.submit-question .option-item .el-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.submit-question .option-item .el-input__wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.submit-question .option-item .el-input__prepend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 45px;
+    height: 100%;
+}
+
+.submit-question .option-item .el-input__inner {
+    padding-left: 0;
+}
+
+.submit-question .el-button--small {
+    padding: 8px 15px;
+    font-size: 13px;
+}
+
+.submit-question .el-form-item__content > .el-button {
+    margin-top: 8px;
+}
+
 /* 选项显示样式 */
 .answer-options {
     display: flex;
