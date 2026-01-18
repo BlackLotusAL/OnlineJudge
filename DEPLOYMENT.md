@@ -41,6 +41,7 @@ sudo apt-get install postgresql postgresql-contrib libpq-dev
 # CentOS/RHEL
 sudo yum install postgresql-server postgresql-contrib postgresql-devel
 sudo postgresql-setup initdb
+
 sudo systemctl enable postgresql
 sudo systemctl start postgresql
 ```
@@ -69,6 +70,7 @@ sudo -u postgres psql
 CREATE DATABASE onlinejudge;
 CREATE USER postgres WITH PASSWORD 'postgres';
 GRANT ALL PRIVILEGES ON DATABASE onlinejudge TO postgres;
+\password
 \q
 ```
 
@@ -127,16 +129,12 @@ GRANT ALL PRIVILEGES ON DATABASE onlinejudge TO postgres;
 ```bash
 git clone <项目仓库地址>
 cd OnlineJudge
-
-git restore .
-git pull --rebase origin main
-
 ```
 
 2. 安装项目依赖:
 ```bash
 # 创建虚拟环境
-python -m venv venv
+python3 -m venv venv
 
 # 激活虚拟环境
 source venv/bin/activate
@@ -190,8 +188,9 @@ python init_db.py
 ```bash
 # 使用管理脚本启动服务
 cd ..
-chmod +x manage.sh
-./manage.sh start
+chmod +x manage.sh && ./manage.sh start
+chmod +x deploy.sh && ./deploy.sh
+chmod +x diagnose.sh && ./diagnose.sh
 ```
 
 7. 验证服务是否启动成功:
@@ -210,19 +209,22 @@ sudo vi /etc/nginx/conf.d/onlinejudge.conf
 ```nginx
 server {
     listen 80;
-    server_name your-domain.com;  # 替换为你的域名或IP地址
+    server_name 47.83.236.198;  # 替换为你的服务器IP或域名
 
+    # 代理前端静态文件
     location / {
+        root /var/www/html/onlinejudge;  # 前端文件目录
+        index index.html;
+        try_files $uri $uri/ /index.html;  # 处理单页应用路由
+    }
+
+    # 代理后端API
+    location /api/ {
         proxy_pass http://localhost:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /static {
-        alias /path/to/OnlineJudge/frontend;  # 替换为前端文件路径
-        expires 30d;
     }
 }
 ```
