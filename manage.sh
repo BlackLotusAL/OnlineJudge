@@ -71,16 +71,28 @@ backup() {
     # 生成备份文件名
     BACKUP_FILE="$BACKUP_DIR/${APP_NAME}_$(date +%Y%m%d_%H%M%S).sql"
     
-    # 从配置文件中读取数据库信息
+    # 从配置文件中读取数据库信息（使用Python解析YAML）
     if [ -f "$CONFIG_DIR/config.yaml" ]; then
-        DB_HOST=$(grep -A5 "database:" $CONFIG_DIR/config.yaml | grep "host:" | awk '{print $2}')
-        DB_PORT=$(grep -A5 "database:" $CONFIG_DIR/config.yaml | grep "port:" | awk '{print $2}')
-        DB_NAME=$(grep -A5 "database:" $CONFIG_DIR/config.yaml | grep "name:" | awk '{print $2}')
-        DB_USER=$(grep -A5 "database:" $CONFIG_DIR/config.yaml | grep "user:" | awk '{print $2}')
-        DB_PASS=$(grep -A5 "database:" $CONFIG_DIR/config.yaml | grep "password:" | awk '{print $2}')
+        # 使用Python读取YAML配置
+        DB_INFO=$(python3 -c "
+import yaml
+import sys
+
+with open('$CONFIG_DIR/config.yaml', 'r') as f:
+    config = yaml.safe_load(f)
+    db = config.get('database', {})
+    print(f\"{db.get('host', 'localhost')}|{db.get('port', 5432)}|{db.get('name', 'onlinejudge')}|{db.get('user', 'postgres')}|{db.get('password', 'postgres')}\"
+")
+        
+        # 解析数据库信息
+        DB_HOST=$(echo $DB_INFO | cut -d'|' -f1)
+        DB_PORT=$(echo $DB_INFO | cut -d'|' -f2)
+        DB_NAME=$(echo $DB_INFO | cut -d'|' -f3)
+        DB_USER=$(echo $DB_INFO | cut -d'|' -f4)
+        DB_PASS=$(echo $DB_INFO | cut -d'|' -f5)
         
         # 执行备份
-        PGPASSWORD=$DB_PASS pg_dump -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME > $BACKUP_FILE
+        PGPASSWORD=$DB_PASS pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" > "$BACKUP_FILE"
         
         if [ $? -eq 0 ]; then
             echo "数据备份成功，备份文件：$BACKUP_FILE"
@@ -104,16 +116,28 @@ restore() {
     read -p "请输入要恢复的备份文件名：" BACKUP_FILE
     
     if [ -f "$BACKUP_FILE" ]; then
-        # 从配置文件中读取数据库信息
+        # 从配置文件中读取数据库信息（使用Python解析YAML）
         if [ -f "$CONFIG_DIR/config.yaml" ]; then
-            DB_HOST=$(grep -A5 "database:" $CONFIG_DIR/config.yaml | grep "host:" | awk '{print $2}')
-            DB_PORT=$(grep -A5 "database:" $CONFIG_DIR/config.yaml | grep "port:" | awk '{print $2}')
-            DB_NAME=$(grep -A5 "database:" $CONFIG_DIR/config.yaml | grep "name:" | awk '{print $2}')
-            DB_USER=$(grep -A5 "database:" $CONFIG_DIR/config.yaml | grep "user:" | awk '{print $2}')
-            DB_PASS=$(grep -A5 "database:" $CONFIG_DIR/config.yaml | grep "password:" | awk '{print $2}')
+            # 使用Python读取YAML配置
+            DB_INFO=$(python3 -c "
+import yaml
+import sys
+
+with open('$CONFIG_DIR/config.yaml', 'r') as f:
+    config = yaml.safe_load(f)
+    db = config.get('database', {})
+    print(f\"{db.get('host', 'localhost')}|{db.get('port', 5432)}|{db.get('name', 'onlinejudge')}|{db.get('user', 'postgres')}|{db.get('password', 'postgres')}\"
+")
+            
+            # 解析数据库信息
+            DB_HOST=$(echo $DB_INFO | cut -d'|' -f1)
+            DB_PORT=$(echo $DB_INFO | cut -d'|' -f2)
+            DB_NAME=$(echo $DB_INFO | cut -d'|' -f3)
+            DB_USER=$(echo $DB_INFO | cut -d'|' -f4)
+            DB_PASS=$(echo $DB_INFO | cut -d'|' -f5)
             
             # 执行恢复
-            PGPASSWORD=$DB_PASS psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME < $BACKUP_FILE
+            PGPASSWORD=$DB_PASS psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" < "$BACKUP_FILE"
             
             if [ $? -eq 0 ]; then
                 echo "数据恢复成功"
